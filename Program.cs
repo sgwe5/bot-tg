@@ -1,11 +1,13 @@
 ﻿using System;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
+using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 
-    var client = new TelegramBotClient("6913477662:AAHnd6ZTovcXtrdl4B2oP3FmS7MOkFv_Gv4");
-    client.StartReceiving(Update, Error);
+    var botClient = new TelegramBotClient("6913477662:AAHnd6ZTovcXtrdl4B2oP3FmS7MOkFv_Gv4");
+    botClient.StartReceiving(Update, Error);
     Console.ReadLine();
 
 async static Task Error(ITelegramBotClient client, Exception exception, CancellationToken token)
@@ -16,33 +18,51 @@ async static Task Error(ITelegramBotClient client, Exception exception, Cancella
 async static Task Update(ITelegramBotClient Client, Update update, CancellationToken token)
 {
     var message = update.Message;
-    if (message.Text != null && message.Text.ToLower() == "/start")
+    if (message == null)
+        return;
+    switch(message.Text)
     {
-        await Client.SendTextMessageAsync(message.Chat.Id, "Привет, подпишись пожалуйста:\t https://www.twitch.tv/cro_okedfinger");
+        case "/start":
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        new[]
+                        {
+                            InlineKeyboardButton.WithUrl("Button 1", "https://www.google.com"),
+                        }
+            });
+            await Client.SendTextMessageAsync(message.Chat.Id, "Добро пожаловать ... , выбери команду: /coff ", replyMarkup: inlineKeyboard);
+            break;
+        case "/coff"://вкидывает рандомный коэффицент, вписаный заранее
+            string[] decimalNumbers = { "1.21", "22.79", "7.89", "3.06", "2.47", "1.17", "27.64", "2.68", "1.88", "0.12" };
+            Random rnd = new Random();
+            int index = rnd.Next(decimalNumbers.Length); 
+            string selectedNumber = decimalNumbers[index]; 
+            await Client.SendTextMessageAsync(message.Chat.Id, $"В следующем раунде Lucky улетит на: {selectedNumber}");
+            break;
+        case "/keyboard":
+            ReplyKeyboardMarkup keyboard = new(new[]
+            {
+                new KeyboardButton [] {"FAQ", "Коэффицент"}
+            })
+            {
+                ResizeKeyboard = true,
+            };
+            await Client.SendTextMessageAsync(message.Chat.Id, "Выберите:", replyMarkup: keyboard);
+            break;
     }
 }
-    static async Task Main(string[] args)
+Task HandleErrorAsync(ITelegramBotClient client, Exception exception, CancellationToken cancellationToken)
 {
-    string[] decimalNumbers = { "1.23", "4.56", "7.89", "2.34", "5.67", "8.90", "3.45", "6.78", "9.01", "0.12" };
-
-    botClient.OnMessage += async (sender, e) =>
+    var ErrorMessage = exception switch
     {
-        if (e.Message.Text != null)
-        {
-            if (e.Message.Text.ToLower() == "/randomdecimal")
-            {
-                Random rnd = new Random();
-                int index = rnd.Next(decimalNumbers.Length); // Selects a random index from the array
-                string selectedNumber = decimalNumbers[index]; // Retrieves the selected decimal number
-                await botClient.SendTextMessageAsync(e.Message.Chat.Id, $"Randomly selected decimal number: {selectedNumber}");
-
-            }
-        }
+        ApiRequestException apiRequestException
+            => $"Ошибка телеграм АПИ:\n{apiRequestException.ErrorCode}\n{apiRequestException.Message}",
+        _ => exception.ToString()
     };
-    botClient.StartReceiving();
-    Console.WriteLine("Bot started. Press any key to exit");
-    Console.ReadKey();
-    botClient.StopReceiving();
+    Console.WriteLine(ErrorMessage);
+    return Task.CompletedTask;
 }
+
+
 
 
