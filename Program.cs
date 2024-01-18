@@ -27,7 +27,7 @@ async static Task Update(ITelegramBotClient Client, Update update, CancellationT
                     {
                         new[]
                         {
-                            InlineKeyboardButton.WithUrl("Button 1", "https://www.google.com"),
+                            InlineKeyboardButton.WithText("FAQ", ""),
                         }
             });
             await Client.SendTextMessageAsync(message.Chat.Id, "Добро пожаловать ... , выбери команду: /coff ", replyMarkup: inlineKeyboard);

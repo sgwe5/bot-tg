@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace bot_tg.core
 {
-    internal interface Iparcersettings
+    internal interface Iparsersettings
     {
         string BaseUrl { get; set; }
 
-        string Profix {  get; set; }
+        string Prefix {  get; set; }
 
-
+        int StartPoint { get; set; }
+        int EndPoint { get; set; }
     }
 }
